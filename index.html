@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent AI 安全闖關王</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:"Microsoft JhengHei",sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#0f172a,#1e293b,#2563eb);
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+color:white;
+}
+
+.container{
+max-width:900px;
+width:100%;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(12px);
+border-radius:25px;
+padding:30px;
+box-shadow:0 10px 40px rgba(0,0,0,.3);
+animation:fadeIn 0.6s;
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(20px);}
+to{opacity:1;transform:translateY(0);}
+}
+
+h1{
+text-align:center;
+margin-bottom:15px;
+font-size:2.3rem;
+color:#facc15;
+}
+
+.subtitle{
+text-align:center;
+margin-bottom:20px;
+opacity:.9;
+}
+
+.progress-container{
+height:15px;
+background:#334155;
+border-radius:10px;
+overflow:hidden;
+margin-bottom:20px;
+}
+
+.progress{
+height:100%;
+width:0%;
+background:linear-gradient(90deg,#22c55e,#84cc16);
+transition:.4s;
+}
+
+.stats{
+display:flex;
+justify-content:space-between;
+margin-bottom:20px;
+font-size:18px;
+font-weight:bold;
+}
+
+.question{
+font-size:1.4rem;
+line-height:1.6;
+margin-bottom:25px;
+}
+
+.option{
+background:#1e293b;
+padding:15px;
+margin-bottom:12px;
+border-radius:12px;
+cursor:pointer;
+transition:.25s;
+border:2px solid transparent;
+}
+
+.option:hover{
+background:#334155;
+transform:translateY(-2px);
+}
+
+.option.correct{
+background:#15803d;
+border-color:white;
+}
+
+.option.wrong{
+background:#dc2626;
+border-color:white;
+}
+
+.next-btn{
+width:100%;
+padding:15px;
+font-size:18px;
+background:#facc15;
+color:black;
+font-weight:bold;
+border:none;
+border-radius:12px;
+cursor:pointer;
+margin-top:15px;
+display:none;
+}
+
+.next-btn:hover{
+background:#fde047;
+}
+
+.explanation{
+margin-top:15px;
+padding:15px;
+border-radius:12px;
+background:rgba(255,255,255,.1);
+display:none;
+}
+
+.result{
+text-align:center;
+display:none;
+}
+
+.result h2{
+font-size:2.4rem;
+margin-bottom:15px;
+}
+
+.score-circle{
+width:180px;
+height:180px;
+margin:20px auto;
+border-radius:50%;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:48px;
+font-weight:bold;
+background:linear-gradient(135deg,#22c55e,#16a34a);
+}
+
+.badge{
+font-size:28px;
+margin-bottom:20px;
+}
+
+.restart{
+padding:15px 30px;
+font-size:18px;
+border:none;
+border-radius:12px;
+background:#facc15;
+cursor:pointer;
+font-weight:bold;
+}
+
+.fire{
+animation:pulse .8s infinite;
+}
+
+@keyframes pulse{
+50%{transform:scale(1.08);}
+}
+
+.start-screen{
+text-align:center;
+}
+
+.start-screen button{
+margin-top:20px;
+padding:15px 25px;
+font-size:20px;
+border:none;
+border-radius:12px;
+background:#22c55e;
+color:white;
+cursor:pointer;
+font-weight:bold;
+}
+
+.level{
+font-size:22px;
+color:#facc15;
+margin-bottom:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div id="startScreen" class="start-screen">
+<h1>🤖 Agent AI 安全闖關王</h1>
+<p class="subtitle">
+挑戰 10 題代理 AI 安全知識<br>
+看看你是不是 AI 安全守門員！
+</p>
+<button onclick="startQuiz()">開始挑戰</button>
+</div>
+
+<div id="quizArea" style="display:none">
+
+<div class="level" id="level"></div>
+
+<div class="progress-container">
+<div class="progress" id="progress"></div>
+</div>
+
+<div class="stats">
+<div>📌 題目 <span id="current">1</span>/10</div>
+<div>⭐ 分數 <span id="score">0</span></div>
+<div>⏰ <span id="timer">20</span>秒</div>
+</div>
+
+<div id="question" class="question"></div>
+
+<div id="options"></div>
+
+<div id="explanation" class="explanation"></div>
+
+<button class="next-btn" id="nextBtn" onclick="nextQuestion()">
+下一題 ➜
+</button>
+
+</div>
+
+<div id="result" class="result">
+<h2>🎉 闖關完成！</h2>
+
+<div class="score-circle" id="finalScore"></div>
+
+<div class="badge" id="badge"></div>
+
+<p id="message"></p>
+
+<br>
+
+<button class="restart" onclick="location.reload()">
+重新挑戰
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const quizData = [
+
+{
+question:"🤖 小明使用AI整理會議紀錄，只提供摘要給自己參考，並未修改系統資料。風險最接近？",
+options:["L1-L2低風險輔助應用","L4高風險","重大資安事件","法規違規"],
+answer:0,
+explanation:"單純查詢與摘要通常屬於較低風險的輔助應用。"
+},
+
+{
+question:"📧 AI將客戶個資自動寄送到未經核准的Email，屬於哪種風險？",
+options:["Memory Poisoning","Tool Misuse","Goal Hijack","幻覺"],
+answer:1,
+explanation:"合法工具被錯誤使用導致資料外送，屬工具濫用風險。"
+},
+
+{
+question:"🔑 為何代理AI不應直接共用員工帳號？",
+options:["比較慢","成本高","責任與權限無法追溯","沒有差"],
+answer:2,
+explanation:"代理應具獨立身分，才能落實權限控管與追蹤。"
+},
+
+{
+question:"🚧 哪項動作最需要保留人工確認？",
+options:["新聞摘要","會議紀錄","修改客戶資料","草擬公告"],
+answer:2,
+explanation:"涉及客戶權益與正式資料異動應保留人工確認。"
+},
+
+{
+question:"🎯 Agent Goal Hijack 是指？",
+options:[
+"受到惡意指令影響偏離原目標",
+"AI速度變慢",
+"模型升級",
+"登入失敗"
+],
+answer:0,
+explanation:"提示注入可能讓代理偏離原始目標。"
+},
+
+{
+question:"📚 哪項資料不應直接寫入RAG知識庫？",
+options:[
+"核准文件",
+"法規資料",
+"未查證網路資訊",
+"教育訓練教材"
+],
+answer:2,
+explanation:"可能造成知識庫污染。"
+},
+
+{
+question:"🌐 AI嘗試將資料送往未核准網站時應如何處理？",
+options:[
+"直接放行",
+"阻擋或告警",
+"忽略",
+"讓AI自行決定"
+],
+answer:1,
+explanation:"應限制非白名單目的地。"
+},
+
+{
+question:"🔍 短時間查詢大量客戶資料最可能代表？",
+options:[
+"跨客戶異常查詢",
+"正常工作",
+"系統更新",
+"登入成功"
+],
+answer:0,
+explanation:"可能觸發跨客戶資料存取風險。"
+},
+
+{
+question:"🧠 Memory Poisoning 代表什麼？",
+options:[
+"電腦記憶體損壞",
+"錯誤資訊持續被引用",
+"網路斷線",
+"AI停機"
+],
+answer:1,
+explanation:"污染內容進入記憶後持續影響決策。"
+},
+
+{
+question:"🏆 使用代理AI最重要的原則是？",
+options:[
+"AI永遠是對的",
+"越自動越好",
+"可控、可追溯、最小權限",
+"全部交給AI"
+],
+answer:2,
+explanation:"安全治理核心即風險導向、可控與可追溯。"
+}
+
+];
+
+let currentQuestion = 0;
+let score = 0;
+let timer = 20;
+let countdown;
+
+function startQuiz(){
+document.getElementById("startScreen").style.display="none";
+document.getElementById("quizArea").style.display="block";
+loadQuestion();
+}
+
+function getLevel(index){
+if(index<3) return "🎮 第一關：AI小幫手";
+if(index<7) return "🛡️ 第二關：風險獵人";
+return "🏆 第三關：守護者挑戰";
+}
+
+function startTimer(){
+
+timer=20;
+document.getElementById("timer").innerText=timer;
+
+countdown=setInterval(()=>{
+timer--;
+document.getElementById("timer").innerText=timer;
+
+if(timer===0){
+clearInterval(countdown);
+showAnswer(-1);
+}
+},1000);
+
+}
+
+function loadQuestion(){
+
+const q=quizData[currentQuestion];
+
+document.getElementById("question").innerHTML=q.question;
+document.getElementById("current").innerText=currentQuestion+1;
+document.getElementById("level").innerText=getLevel(currentQuestion);
+
+document.getElementById("progress").style.width=
+((currentQuestion)/quizData.length*100)+"%";
+
+const options=document.getElementById("options");
+options.innerHTML="";
+
+q.options.forEach((opt,index)=>{
+
+const div=document.createElement("div");
+div.className="option";
+div.innerText=opt;
+div.onclick=()=>showAnswer(index);
+
+options.appendChild(div);
+
+});
+
+document.getElementById("explanation").style.display="none";
+document.getElementById("nextBtn").style.display="none";
+
+startTimer();
+}
+
+function showAnswer(selected){
+
+clearInterval(countdown);
+
+const q=quizData[currentQuestion];
+const options=document.querySelectorAll(".option");
+
+options.forEach((op,index)=>{
+
+if(index===q.answer){
+op.classList.add("correct");
+}
+
+if(index===selected && selected!==q.answer){
+op.classList.add("wrong");
+}
+
+op.style.pointerEvents="none";
+
+});
+
+if(selected===q.answer){
+
+score+=10;
+
+document.getElementById("score").innerText=score;
+
+if(score>=30){
+document.getElementById("score").classList.add("fire");
+}
+}
+
+const exp=document.getElementById("explanation");
+exp.innerHTML="💡 "+q.explanation;
+exp.style.display="block";
+
+document.getElementById("nextBtn").style.display="block";
+}
+
+function nextQuestion(){
+
+currentQuestion++;
+
+if(currentQuestion<quizData.length){
+
+loadQuestion();
+
+}else{
+
+showResult();
+
+}
+
+}
+
+function showResult(){
+
+document.getElementById("quizArea").style.display="none";
+document.getElementById("result").style.display="block";
+
+document.getElementById("finalScore").innerText=score;
+
+let badge="";
+let message="";
+
+if(score>=90){
+
+badge="🏆 AI安全達人";
+message="恭喜！你已經具備良好的代理AI風險意識。";
+
+}else if(score>=70){
+
+badge="🥈 AI風險觀察員";
+message="不錯喔！再熟悉幾個關鍵風險就能晉級。";
+
+}else if(score>=50){
+
+badge="🥉 AI新手村居民";
+message="基礎觀念已有，建議持續學習。";
+
+}else{
+
+badge="📚 AI補課中";
+message="建議重新挑戰並複習課程重點。";
+
+}
+
+document.getElementById("badge").innerText=badge;
+document.getElementById("message").innerText=message;
+
+document.getElementById("progress").style.width="100%";
+
+}
+
+</script>
+
+</body>
+</html>
